@@ -540,3 +540,40 @@ def test_rest_and_ws_admin(tmp_path: Path) -> None:
         assert client.get("/api/players", params={"search": players[1]["nickname"][:4]}).json()
         assert client.get("/api/settings").json()["boss_max_hp"] == 777
 
+
+async def test_auto_bot_populate_action_and_yield(env) -> None:
+    engine, rec, clock, db, store = env
+    assert not engine.settings.auto_bot_enabled
+
+    # Bật Auto-Bot giữ tối thiểu 3 người trên bờ
+    res = await admin(
+        engine,
+        "settings_update",
+        auto_bot_enabled=True,
+        auto_bot_min_players=3,
+        auto_bot_action_interval_seconds=2.0,
+    )
+    assert res.ok and engine.settings.auto_bot_enabled
+
+    # Tick cách nhau 2.5s -> tự sinh đủ 3 bot (prefix bot_)
+    for i in range(3):
+        clock.t += 2.5
+        await engine.tick(clock.t)
+    shore = engine.shore_players()
+    assert len(shore) == 3
+    assert all(p.unique_id.startswith("bot_") for p in shore)
+
+    # Tick thêm -> bot thực hiện tương tác (like/diem/comment/gift) mà không spawn thêm bot thứ 4
+    clock.t += 2.5
+    await engine.tick(clock.t)
+    assert len(engine.shore_players()) == 3
+
+    # 3 người thật tham gia -> bot tự nhường chỗ (BOT_YIELD) dần trong các tick tiếp theo
+    for i in range(3):
+        await join(engine, f"human_{i}")
+    assert len(engine.shore_players()) == 6
+    clock.t += 2.5
+    await engine.tick(clock.t)
+    assert len(engine.shore_players()) == 5
+    assert any(ev["reason"] == "BOT_YIELD" for ev in rec.got("PLAYER_LEFT"))
+

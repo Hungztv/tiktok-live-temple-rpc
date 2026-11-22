@@ -117,6 +117,9 @@ class GameSettings(BaseModel):
     boss_summon_gift_threshold: int = Field(default=1000, ge=1)
     fever_threshold: int = Field(default=1000, ge=1)
     fever_duration_seconds: int = Field(default=60, ge=1)
+    auto_bot_enabled: bool = False
+    auto_bot_min_players: int = Field(default=5, ge=1, le=15)
+    auto_bot_action_interval_seconds: float = Field(default=8.0, ge=1.0, le=120.0)
     tts: TtsSettings = Field(default_factory=TtsSettings)
     # nhóm -> danh sách câu thoại (50 câu mặc định chia 9 nhóm)
     phrases: dict[str, list[str]] = Field(default_factory=get_default_phrases)

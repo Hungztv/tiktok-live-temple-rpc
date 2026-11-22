@@ -89,6 +89,49 @@ class Simulator:
             created.append(user)
         return created
 
+    async def spawn_bot(self) -> MockUser:
+        """Tạo 1 bot tự động (prefix bot_) và thả cần qua GameEngine.handle_event."""
+        rng = self._rng
+        nick = f"{rng.choice(LAST_NAMES)} {rng.choice(MID_NAMES)} {rng.choice(FIRST_NAMES)}"
+        uid = f"bot_{next(self._counter)}_{uuid.uuid4().hex[:4]}"
+        user = MockUser(UserInfo(unique_id=uid, nickname=nick, avatar_url=make_avatar(nick, rng.choice(COLORS))))
+        self.users[uid] = user
+        await self._engine.handle_event(GameComment(user=user.info, text="cau"))
+        return user
+
+    async def run_bot_action(self, user: UserInfo, boss_active: bool) -> None:
+        """Cho bot thực hiện 1 hành động tự nhiên (bắn Boss, thả tim, xem điểm, hoặc tặng Hoa Hồng)."""
+        if boss_active:
+            cheers = ["Bắn mạnh lên!", "Hạ Boss Kraken nào!", "Tấn công!", "Lên luôn anh em!"]
+            await self._engine.handle_event(GameComment(user=user, text=self._rng.choice(cheers)))
+            return
+
+        roll = self._rng.random()
+        if roll < 0.45:
+            # Thả tim tích nhiệt độ hồ
+            await self._engine.handle_event(GameLike(user=user, count=self._rng.randint(10, 35)))
+        elif roll < 0.78:
+            # Gõ lệnh xem điểm để hiện bong bóng chat
+            await self._engine.handle_event(GameComment(user=user, text="diem"))
+        elif roll < 0.92:
+            # Giữ tương tác bình thường
+            await self._engine.handle_event(GameComment(user=user, text="cá to quá!"))
+        else:
+            # Thỉnh thoảng tặng 1 bông Hoa Hồng (1 xu) để hồ có hiệu ứng lưới điện
+            gift_id, gift_name, diamonds, streakable = GIFT_CATALOG["rose"]
+            await self._engine.handle_event(
+                GameGift(
+                    user=user,
+                    gift_id=gift_id,
+                    gift_name=gift_name,
+                    diamond_count=diamonds,
+                    repeat_count=1,
+                    streakable=streakable,
+                    streaking=False,
+                    group_id=uuid.uuid4().hex,
+                )
+            )
+
     async def mock_event(self, params: dict[str, Any]) -> str:
         p = MockEventParams.model_validate(params)
         user = self._resolve_user(p.user_id, p.nickname).info

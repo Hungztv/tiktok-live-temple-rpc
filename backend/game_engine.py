@@ -264,6 +264,8 @@ class GameEngine:
         self._boss_base = clock()
         self._last_flush = clock()
         self._last_idle_chat = clock()
+        self._last_bot_manage = 0.0
+        self._last_bot_action = 0.0
 
         # Hook gắn bởi các phase sau
         self.tiktok: TikTokController | None = None
@@ -764,8 +766,42 @@ class GameEngine:
 
     # ------------------------------------------------------------ scheduler tick
     async def tick(self, now: float | None = None) -> None:
+        cur = self.clock() if now is None else now
         async with self._async_lock:
-            await self._tick(self.clock() if now is None else now)
+            await self._tick(cur)
+        # Chạy Auto-Bot ngoài lock để mọi hành động bot đều đi qua GameEngine.handle_event()
+        await self._tick_auto_bot(cur)
+
+    async def _tick_auto_bot(self, now: float) -> None:
+        """Tự động bổ sung bot khi hồ vắng người và rút dần bot khi người thật vào đủ đông."""
+        s = self.settings
+        if not s.auto_bot_enabled:
+            return
+
+        shore = self.shore_players()
+        bots = [p for p in shore if p.unique_id.startswith("bot_")]
+        humans = [p for p in shore if not p.unique_id.startswith("bot_")]
+
+        # Mỗi 2 giây kiểm tra bổ sung 1 bot (nếu thiếu) hoặc nhường chỗ (nếu người thật đông)
+        if now - self._last_bot_manage >= 2.0:
+            self._last_bot_manage = now
+            if len(shore) < s.auto_bot_min_players:
+                await self.simulator.spawn_bot()
+                return
+            if len(humans) >= s.auto_bot_min_players and bots:
+                # Người thật đã đủ đông -> cho 1 bot cũ rời bờ nhường chỗ
+                oldest_bot = min(bots, key=lambda p: p.last_interaction)
+                async with self._async_lock:
+                    await self._leave(oldest_bot, "BOT_YIELD")
+                return
+
+        # Cho 1 bot đang trên bờ tương tác tự nhiên theo chu kỳ (khi có Boss thì bắn nhanh hơn)
+        interval = 2.0 if self.boss.active else s.auto_bot_action_interval_seconds
+        if bots and (now - self._last_bot_action >= interval):
+            self._last_bot_action = now
+            chosen = self.rng.choice(bots)
+            user = UserInfo(chosen.unique_id, chosen.nickname, chosen.avatar_url)
+            await self.simulator.run_bot_action(user, boss_active=self.boss.active)
 
     async def _tick(self, now: float) -> None:
         s = self.settings

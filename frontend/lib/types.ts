@@ -36,6 +36,9 @@ export interface PublicGameSettings {
   boss_summon_gift_threshold: number;
   fever_threshold: number;
   fever_duration_seconds: number;
+  auto_bot_enabled: boolean;
+  auto_bot_min_players: number;
+  auto_bot_action_interval_seconds: number;
 }
 
 export interface FullGameSettings extends PublicGameSettings {

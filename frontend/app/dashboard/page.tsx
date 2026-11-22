@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
+  Bot,
   CheckCircle2,
   Coins,
   Crown,
@@ -125,6 +126,9 @@ const DEFAULT_PUBLIC_SETTINGS: PublicGameSettings = {
   boss_summon_gift_threshold: 1000,
   fever_threshold: 1000,
   fever_duration_seconds: 60,
+  auto_bot_enabled: false,
+  auto_bot_min_players: 5,
+  auto_bot_action_interval_seconds: 8,
 };
 
 export default function DashboardPage() {
@@ -231,6 +235,9 @@ export default function DashboardPage() {
           boss_summon_gift_threshold: data.boss_summon_gift_threshold,
           fever_threshold: data.fever_threshold,
           fever_duration_seconds: data.fever_duration_seconds,
+          auto_bot_enabled: data.auto_bot_enabled ?? false,
+          auto_bot_min_players: data.auto_bot_min_players ?? 5,
+          auto_bot_action_interval_seconds: data.auto_bot_action_interval_seconds ?? 8,
         });
       } catch {
         // Sẽ tự đồng bộ qua STATE_SYNC của WS
@@ -824,6 +831,102 @@ export default function DashboardPage() {
                   <Ship className="w-4 h-4" />
                   Làm sạch hồ
                 </button>
+              </div>
+
+              {/* Auto-Bot tự động giữ hồ sôi động khi vắng người */}
+              <div className="rounded-xl bg-slate-950/80 border border-indigo-500/35 p-3 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-4 h-4 text-indigo-400" />
+                    <div>
+                      <div className="text-xs font-bold text-indigo-200">
+                        Auto-Bot khi vắng người
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Tự thả bot câu cá, thả tim, bắn Boss khi hồ vắng — tự nhường chỗ khi người thật vào đông.
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextEnabled = !balanceForm.auto_bot_enabled;
+                      setBalanceForm((p) => ({ ...p, auto_bot_enabled: nextEnabled }));
+                      sendCommand("settings_update", {
+                        auto_bot_enabled: nextEnabled,
+                        auto_bot_min_players: balanceForm.auto_bot_min_players,
+                        auto_bot_action_interval_seconds:
+                          balanceForm.auto_bot_action_interval_seconds,
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                      balanceForm.auto_bot_enabled
+                        ? "bg-indigo-600/30 border-indigo-400 text-indigo-200"
+                        : "bg-slate-900 border-slate-700 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {balanceForm.auto_bot_enabled ? "🤖 ĐANG BẬT" : "ĐANG TẮT"}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 text-xs pt-1 border-t border-slate-800/80">
+                  <label className="inline-flex items-center gap-1.5 text-slate-300">
+                    <span>Tối thiểu trên bờ:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={15}
+                      value={balanceForm.auto_bot_min_players}
+                      onChange={(e) =>
+                        setBalanceForm((p) => ({
+                          ...p,
+                          auto_bot_min_players: Math.max(
+                            1,
+                            Math.min(15, Number(e.target.value) || 1)
+                          ),
+                        }))
+                      }
+                      className="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-xs text-white text-center"
+                    />
+                    <span className="text-slate-500">người</span>
+                  </label>
+
+                  <label className="inline-flex items-center gap-1.5 text-slate-300">
+                    <span>Chu kỳ tương tác:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={120}
+                      value={balanceForm.auto_bot_action_interval_seconds}
+                      onChange={(e) =>
+                        setBalanceForm((p) => ({
+                          ...p,
+                          auto_bot_action_interval_seconds: Math.max(
+                            1,
+                            Math.min(120, Number(e.target.value) || 8)
+                          ),
+                        }))
+                      }
+                      className="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-xs text-white text-center"
+                    />
+                    <span className="text-slate-500">giây</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      sendCommand("settings_update", {
+                        auto_bot_enabled: balanceForm.auto_bot_enabled,
+                        auto_bot_min_players: balanceForm.auto_bot_min_players,
+                        auto_bot_action_interval_seconds:
+                          balanceForm.auto_bot_action_interval_seconds,
+                      })
+                    }
+                    className="ml-auto px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-indigo-600/70 text-[11px] font-bold text-indigo-200 cursor-pointer"
+                  >
+                    Áp dụng Bot
+                  </button>
+                </div>
               </div>
             </section>
 
