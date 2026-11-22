@@ -52,28 +52,31 @@ function AnimatedScore({ value }: { value: number }) {
 function TopRankCard({ entry, rank }: { entry?: Top3Entry; rank: 1 | 2 | 3 }) {
   const styles = {
     1: {
-      border: "border-amber-400/80",
-      bg: "from-amber-500/25 via-slate-900/90 to-slate-950/90",
+      wrap: "-mt-1 ring-2 ring-amber-400/90 shadow-lg shadow-amber-500/30",
+      bg: "from-amber-400/30 via-slate-900/95 to-slate-950/95",
       crown: "text-amber-300",
-      badge: "bg-amber-400 text-slate-950",
+      badge: "bg-gradient-to-br from-yellow-300 to-amber-500 text-slate-950",
+      avatarSize: "w-9 h-9",
     },
     2: {
-      border: "border-slate-300/60",
-      bg: "from-slate-400/20 via-slate-900/90 to-slate-950/90",
+      wrap: "mt-1 border border-slate-300/60 shadow-md",
+      bg: "from-slate-300/20 via-slate-900/90 to-slate-950/95",
       crown: "text-slate-200",
-      badge: "bg-slate-300 text-slate-950",
+      badge: "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-950",
+      avatarSize: "w-8 h-8",
     },
     3: {
-      border: "border-amber-700/70",
-      bg: "from-amber-800/25 via-slate-900/90 to-slate-950/90",
+      wrap: "mt-1 border border-amber-700/70 shadow-md",
+      bg: "from-amber-700/25 via-slate-900/90 to-slate-950/95",
       crown: "text-amber-500",
-      badge: "bg-amber-600 text-white",
+      badge: "bg-gradient-to-br from-amber-500 to-orange-700 text-white",
+      avatarSize: "w-8 h-8",
     },
   }[rank];
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-xl border ${styles.border} bg-gradient-to-b ${styles.bg} px-2.5 py-1.5 backdrop-blur-md shadow-md min-w-0`}
+      className={`flex items-center gap-2 rounded-2xl bg-gradient-to-b ${styles.bg} ${styles.wrap} px-2.5 py-2 backdrop-blur-md min-w-0`}
     >
       <div className="relative shrink-0">
         {entry?.avatar_url ? (
@@ -82,10 +85,12 @@ function TopRankCard({ entry, rank }: { entry?: Top3Entry; rank: 1 | 2 | 3 }) {
             src={entry.avatar_url}
             alt={entry.nickname}
             crossOrigin="anonymous"
-            className="w-8 h-8 rounded-full object-cover border border-white/40"
+            className={`${styles.avatarSize} rounded-full object-cover border-2 border-white/50`}
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/20 flex items-center justify-center text-xs font-bold text-slate-300">
+          <div
+            className={`${styles.avatarSize} rounded-full bg-slate-800 border border-white/25 flex items-center justify-center text-xs font-black text-slate-300`}
+          >
             {entry ? (entry.nickname.trim()[0] || "?").toUpperCase() : `#${rank}`}
           </div>
         )}
@@ -99,13 +104,13 @@ function TopRankCard({ entry, rank }: { entry?: Top3Entry; rank: 1 | 2 | 3 }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1">
           <Crown className={`w-3 h-3 shrink-0 ${styles.crown}`} />
-          <span className="text-[11px] font-bold text-white truncate">
-            {entry ? entry.nickname : "Chưa có"}
+          <span className="text-[11px] font-extrabold text-white truncate">
+            {entry ? entry.nickname : "Chờ cần thủ"}
           </span>
         </div>
-        <div className="text-[11px] font-extrabold text-amber-300 tabular-nums">
+        <div className="text-xs font-black text-amber-300 tabular-nums leading-tight">
           {entry ? <AnimatedScore value={entry.score} /> : "0"}{" "}
-          <span className="text-[9px] text-slate-300">đ</span>
+          <span className="text-[9px] font-bold text-slate-300">đ</span>
         </div>
       </div>
     </div>
@@ -446,21 +451,21 @@ function OverlayView() {
           className="absolute inset-0 w-full h-full block"
         />
 
-        {/* TOP HUD (15% trên): Top 3 Vua Câu Cá + Fever Bar + Thanh máu Boss Kraken */}
-        <div className="relative z-10 p-3 space-y-2 pointer-events-none">
-          {/* Bảng xếp hạng Top 3 */}
-          <div className="grid grid-cols-3 gap-1.5">
-            <TopRankCard entry={top3[0]} rank={1} />
+        {/* TOP HUD (15% trên): Podium Top 3 Vua Câu Cá + Fever Bar + Thanh máu Boss Kraken */}
+        <div className="relative z-10 p-3 space-y-2.5 pointer-events-none">
+          {/* Bảng xếp hạng Top 3 kiểu bục vinh quang (Top 2 - Top 1 ở giữa - Top 3) */}
+          <div className="grid grid-cols-3 gap-1.5 items-end pt-1">
             <TopRankCard entry={top3[1]} rank={2} />
+            <TopRankCard entry={top3[0]} rank={1} />
             <TopRankCard entry={top3[2]} rank={3} />
           </div>
 
-          {/* Thanh Nhiệt Độ Hồ Câu (Fever Bar) */}
-          <div className="rounded-xl bg-slate-950/80 border border-slate-700/70 px-3 py-1.5 backdrop-blur-md shadow">
-            <div className="flex items-center justify-between text-[11px] font-bold mb-1">
-              <span className="inline-flex items-center gap-1 text-amber-300">
+          {/* Thanh Nhiệt Độ Hồ Câu (Fever Bar) kiểu Arcade có hiệu ứng shimmer */}
+          <div className="rounded-2xl bg-slate-950/85 border border-cyan-500/35 px-3 py-2 backdrop-blur-md shadow-lg">
+            <div className="flex items-center justify-between text-[11px] font-extrabold mb-1.5">
+              <span className="inline-flex items-center gap-1.5 text-amber-300">
                 <Flame
-                  className={`w-3.5 h-3.5 ${
+                  className={`w-4 h-4 ${
                     fever.active ? "text-rose-400 animate-bounce" : "text-amber-400"
                   }`}
                 />
@@ -468,40 +473,44 @@ function OverlayView() {
                   ? `FEVER TIME X2 TỐC ĐỘ! (${feverLeftSec}s)`
                   : "NHIỆT ĐỘ HỒ CÂU"}
               </span>
-              <span className="text-slate-200 tabular-nums">
-                {fever.active ? "MAX 🔥" : `${fever.heat} / ${fever.max} ❤️`}
+              <span className="text-slate-100 tabular-nums">
+                {fever.active ? "MAX 🔥" : `${fever.heat} / ${fever.max} ❤️ (${feverRatio}%)`}
               </span>
             </div>
-            <div className="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden p-0.5">
+            <div className="relative h-3 w-full rounded-full bg-slate-900 overflow-hidden p-0.5 border border-slate-700/80">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${
+                className={`relative h-full rounded-full overflow-hidden transition-all duration-300 ${
                   fever.active
-                    ? "bg-gradient-to-r from-amber-300 via-rose-500 to-fuchsia-500 animate-pulse"
+                    ? "bg-gradient-to-r from-yellow-300 via-rose-500 to-fuchsia-500"
                     : "bg-gradient-to-r from-cyan-400 via-amber-400 to-rose-500"
                 }`}
                 style={{ width: `${feverRatio}%` }}
-              />
+              >
+                <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/45 to-transparent animate-shimmer" />
+              </div>
             </div>
           </div>
 
           {/* Thanh máu Boss Kraken (chỉ hiện khi có Boss) */}
           {boss && (
-            <div className="rounded-xl bg-rose-950/90 border-2 border-rose-500 px-3 py-2 backdrop-blur-md shadow-lg animate-pulse">
-              <div className="flex items-center justify-between text-xs font-extrabold text-rose-100 mb-1">
-                <span className="inline-flex items-center gap-1.5">
-                  <Skull className="w-4 h-4 text-rose-400" />
+            <div className="rounded-2xl bg-gradient-to-r from-rose-950/95 via-red-950/95 to-rose-950/95 border-2 border-rose-400 px-3.5 py-2 backdrop-blur-md shadow-xl shadow-rose-600/30">
+              <div className="flex items-center justify-between text-xs font-black text-rose-100 mb-1.5">
+                <span className="inline-flex items-center gap-1.5 tracking-wide">
+                  <Skull className="w-4 h-4 text-rose-400 animate-pulse" />
                   BOSS KRAKEN ĐẠI DƯƠNG
                 </span>
                 <span className="tabular-nums text-amber-300">
                   {boss.current_hp.toLocaleString("vi-VN")} /{" "}
-                  {boss.max_hp.toLocaleString("vi-VN")} HP · {bossLeftSec}s
+                  {boss.max_hp.toLocaleString("vi-VN")} HP · ⏱ {bossLeftSec}s
                 </span>
               </div>
-              <div className="h-3 w-full rounded-full bg-slate-950 overflow-hidden p-0.5 border border-rose-500/40">
+              <div className="relative h-3.5 w-full rounded-full bg-slate-950 overflow-hidden p-0.5 border border-rose-400/50">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-rose-600 via-red-500 to-amber-400 transition-all duration-150"
+                  className="relative h-full rounded-full overflow-hidden bg-gradient-to-r from-rose-600 via-red-500 to-amber-400 transition-all duration-150"
                   style={{ width: `${bossHpRatio}%` }}
-                />
+                >
+                  <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/35 to-transparent animate-shimmer" />
+                </div>
               </div>
             </div>
           )}
