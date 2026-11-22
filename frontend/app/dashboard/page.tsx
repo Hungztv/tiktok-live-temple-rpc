@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -133,7 +133,19 @@ const DEFAULT_PUBLIC_SETTINGS: PublicGameSettings = {
   auto_bot_action_interval_seconds: 8,
 };
 
+const emptySubscribe = () => () => {};
+
 export default function DashboardPage() {
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  if (!isClient) return null;
+  return <DashboardContent />;
+}
+
+function DashboardContent() {
   const { connected, reconnecting, state, logs, ttsQueue, sendCommand, subscribe } =
     useGameSocket("dashboard");
 

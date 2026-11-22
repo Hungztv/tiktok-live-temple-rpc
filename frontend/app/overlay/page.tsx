@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Crown, Flame, Ship, Skull, Sparkles, Trophy, Volume2, Zap } from "lucide-react";
@@ -559,7 +559,16 @@ function OverlayView() {
   );
 }
 
+const emptySubscribe = () => () => {};
+
 export default function OverlayPage() {
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  if (!isClient) return null;
+
   return (
     <Suspense fallback={null}>
       <OverlayView />
